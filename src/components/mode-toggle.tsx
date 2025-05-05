@@ -2,16 +2,9 @@
 "use client"
 
 import * as React from "react"
-import { Moon, Sun } from "lucide-react" // Keep standard icons for clarity here
 import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Simple Pixel Sun SVG
@@ -31,6 +24,35 @@ const PixelMoonIcon = () => (
 
 export function ModeToggle() {
   const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
+
+  // Ensure the component is mounted before rendering theme-dependent UI
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Avoid rendering theme-dependent UI on the server or during initial client render
+  if (!mounted) {
+    // Render a placeholder or null to avoid hydration mismatch
+    return (
+        <Button
+            variant="outline"
+            size="icon"
+            disabled // Disable until mounted
+            className="border-primary hover:bg-primary/10"
+            aria-label="Toggle theme (loading)"
+        >
+            <PixelSunIcon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all" />
+            <span className="sr-only">Toggle theme</span>
+         </Button>
+    );
+  }
+
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark")
+  }
+
+  const ariaLabel = `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`;
 
   return (
      <TooltipProvider>
@@ -39,9 +61,9 @@ export function ModeToggle() {
                 <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                    onClick={toggleTheme}
                     className="border-primary hover:bg-primary/10" // Style button
-                    aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                    aria-label={ariaLabel}
                 >
                     <PixelSunIcon className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                     <PixelMoonIcon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
@@ -53,29 +75,5 @@ export function ModeToggle() {
             </TooltipContent>
         </Tooltip>
      </TooltipProvider>
-
-    // --- Alternative Dropdown approach (if more themes were added) ---
-    // <DropdownMenu>
-    //   <DropdownMenuTrigger asChild>
-    //     <Button variant="outline" size="icon">
-    //       <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-    //       <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-    //       <span className="sr-only">Toggle theme</span>
-    //     </Button>
-    //   </DropdownMenuTrigger>
-    //   <DropdownMenuContent align="end">
-    //     <DropdownMenuItem onClick={() => setTheme("light")}>
-    //       Light
-    //     </DropdownMenuItem>
-    //     <DropdownMenuItem onClick={() => setTheme("dark")}>
-    //       Dark
-    //     </DropdownMenuItem>
-    //     {/* <DropdownMenuItem onClick={() => setTheme("system")}>
-    //       System
-    //     </DropdownMenuItem> */}
-    //   </DropdownMenuContent>
-    // </DropdownMenu>
   )
 }
-
-    
