@@ -30,11 +30,17 @@ const PixelAnalyzeIcon = () => (
   </svg>
 );
 
-// Define the pixelated FaceSwap icon using SVG
+// Define the pixelated FaceSwap icon using SVG (Improved)
 const PixelFaceSwapIcon = () => (
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="butt" strokeLinejoin="miter">
-    {/* Simple representation: two squares swapping positions */}
-    <path d="M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z M10 7h4 M7 10v4 M17 10v4 M10 17h4"/>
+    {/* Face 1 */}
+    <path d="M6 6h4v4H6z M7 10h2 M7 12h2"/>
+    {/* Face 2 */}
+    <path d="M14 6h4v4h-4z M15 10h2 M15 12h2"/>
+    {/* Body/Placeholder */}
+    <path d="M4 14h6v6H4z M14 14h6v6h-6z" />
+    {/* Swap Arrows (Simplified) */}
+    <path d="M10 8h4 M12 10l2-2-2-2 M14 16h-4 M12 14l-2 2 2 2" />
  </svg>
 );
 

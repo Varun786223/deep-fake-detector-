@@ -2,26 +2,26 @@
 "use client";
 
 import type { ChangeEvent } from 'react';
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { analyzeDeepfakeVideo, type AnalyzeDeepfakeVideoOutput } from '@/ai/flows/analyze-deepfake-video';
-import { analyzeDeepfake, type AnalyzeDeepfakeOutput as AnalyzeDeepfakeImageOutput } from '@/ai/flows/analyze-deepfake'; // Import analyzeDeepfake for frame analysis
+import { analyzeDeepfake, type AnalyzeDeepfakeOutput as AnalyzeDeepfakeImageOutput } from '@/ai/flows/analyze-deepfake'; // For general frame analysis
+import { detectFaceSwap, type DetectFaceSwapOutput } from '@/ai/flows/detect-face-swap'; // For face swap detection
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Upload, Loader2, Video, Camera, StopCircle } from 'lucide-react';
+import { Upload, Loader2, Video, Camera, StopCircle, ScanSearch, Replace } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Import Select component
 // Import chart components
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
-  type ChartConfig // Import ChartConfig type
+  type ChartConfig
 } from "@/components/ui/chart";
 import {
   LineChart,
@@ -29,11 +29,10 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip as RechartsTooltip, // Alias Recharts Tooltip to avoid conflict with ShadCN Tooltip
-  Legend as RechartsLegend,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { format } from 'date-fns'; // For formatting chart time axis
+import { format } from 'date-fns';
 
 // Define the pixelated Analyze icon using SVG
 const PixelAnalyzeIcon = () => (
@@ -42,8 +41,8 @@ const PixelAnalyzeIcon = () => (
   </svg>
 );
 
-// Define a type that can hold results from either video or image analysis for display
-type DisplayAnalysisResult = {
+// Define type for general deepfake analysis results
+type DisplayDeepfakeResult = {
     confidenceScore: number;
     explanation: string;
 };
@@ -51,22 +50,36 @@ type DisplayAnalysisResult = {
 // Define type for frame analysis data points
 type FrameAnalysisPoint = { time: number; score: number };
 
+// Define types for chart time range options
+type ChartTimeRangeOption = '10s' | '30s' | '1m' | 'all';
+const timeRangeOptions: { value: ChartTimeRangeOption, label: string, durationMs?: number }[] = [
+    { value: '10s', label: 'Last 10 Seconds', durationMs: 10 * 1000 },
+    { value: '30s', label: 'Last 30 Seconds', durationMs: 30 * 1000 },
+    { value: '1m', label: 'Last 1 Minute', durationMs: 60 * 1000 },
+    { value: 'all', label: 'All Time' },
+];
 
 export default function VideoAnalysis() {
+  // File upload state
   const [file, setFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalyzeDeepfakeVideoOutput | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
+
+  // Live stream state
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const [liveAnalysisResult, setLiveAnalysisResult] = useState<DisplayAnalysisResult | null>(null); // Use combined type
-  const [isLiveLoading, setIsLiveLoading] = useState<boolean>(false);
+  const [liveDeepfakeResult, setLiveDeepfakeResult] = useState<DisplayDeepfakeResult | null>(null);
+  const [liveFaceSwapResult, setLiveFaceSwapResult] = useState<DetectFaceSwapOutput | null>(null);
+  const [isLiveAnalysisLoading, setIsLiveAnalysisLoading] = useState<boolean>(false); // Combined loading state for live
   const [liveError, setLiveError] = useState<string | null>(null);
-  const [frameAnalysisData, setFrameAnalysisData] = useState<FrameAnalysisPoint[]>([]); // State for chart data
-  const analysisIntervalRef = useRef<NodeJS.Timeout | null>(null); // Ref for interval ID
+  const [frameAnalysisData, setFrameAnalysisData] = useState<FrameAnalysisPoint[]>([]);
+  const analysisIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [chartTimeRange, setChartTimeRange] = useState<ChartTimeRangeOption>('all'); // Default to show all data
+
+  const { toast } = useToast();
 
   // --- File Upload Logic ---
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -79,7 +92,6 @@ export default function VideoAnalysis() {
         setAnalysisResult(null);
         return;
       }
-      // Limit file size (e.g., 100MB)
       const maxSizeMB = 100;
        if (selectedFile.size > maxSizeMB * 1024 * 1024) {
          setError(`File size exceeds ${maxSizeMB}MB limit.`);
@@ -138,9 +150,7 @@ export default function VideoAnalysis() {
     }
   }, [file, videoUrl, toast]);
 
-
   // --- Live Stream Logic ---
-
   const startStreaming = async () => {
     try {
       setLiveError(null);
@@ -148,25 +158,22 @@ export default function VideoAnalysis() {
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.play().catch(console.error); // Start playing the stream
+        videoRef.current.play().catch(console.error);
       }
       setIsStreaming(true);
       toast({ title: "Live Stream Started", description: "Camera feed is active."});
-      // Start automatic frame analysis loop
       analysisIntervalRef.current = setInterval(() => {
         analyzeLiveFrame();
-      }, 2000); // Analyze every 2 seconds, adjust interval as needed
-
-      // Reset chart data when starting stream
-      setFrameAnalysisData([]);
-
+      }, 3000); // Analyze every 3 seconds (adjust interval as needed, consider cost/performance)
+      setFrameAnalysisData([]); // Reset chart data
+      setLiveDeepfakeResult(null); // Clear previous results
+      setLiveFaceSwapResult(null); // Clear previous results
     } catch (err) {
        console.error("Error accessing camera:", err);
        const errorMsg = err instanceof Error ? err.message : "Unknown error";
        setLiveError(`Could not access camera: ${errorMsg}. Please ensure permissions are granted.`);
        toast({ title: "Camera Error", description: `Could not access camera: ${errorMsg}`, variant: "destructive" });
        setIsStreaming(false);
-       // Ensure interval is cleared if starting failed
        if (analysisIntervalRef.current) {
          clearInterval(analysisIntervalRef.current);
          analysisIntervalRef.current = null;
@@ -175,12 +182,10 @@ export default function VideoAnalysis() {
   };
 
    const stopStreaming = () => {
-    // Clear the analysis interval
     if (analysisIntervalRef.current) {
       clearInterval(analysisIntervalRef.current);
       analysisIntervalRef.current = null;
     }
-
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
     }
@@ -189,25 +194,23 @@ export default function VideoAnalysis() {
     }
     streamRef.current = null;
     setIsStreaming(false);
-    setIsLiveLoading(false); // Stop loading indicator if analysis was running
-    setLiveAnalysisResult(null); // Clear live results
-    setLiveError(null); // Clear errors
-    // Don't clear frameAnalysisData here, keep the history
+    setIsLiveAnalysisLoading(false);
+    setLiveDeepfakeResult(null);
+    setLiveFaceSwapResult(null);
+    setLiveError(null);
+    // Keep frameAnalysisData for viewing history after stopping
     toast({ title: "Live Stream Stopped", description: "Camera feed turned off." });
   };
 
-  // Function for analyzing a single frame from the live stream
+  // Analyze a single live frame for both general deepfake and face swap
   const analyzeLiveFrame = useCallback(async () => {
-      if (!videoRef.current || !isStreaming || isLiveLoading) return; // Prevent overlapping analyses
+      if (!videoRef.current || !isStreaming || isLiveAnalysisLoading) return;
 
-      setIsLiveLoading(true); // Indicate processing started
-      setLiveError(null); // Clear previous errors
-      // Keep previous liveAnalysisResult visible until new one arrives
-      // setLiveAnalysisResult(null);
+      setIsLiveAnalysisLoading(true);
+      setLiveError(null);
 
       try {
           const canvas = document.createElement('canvas');
-          // Reduce canvas size for faster processing/smaller data URI, adjust as needed
           const scale = 0.5;
           canvas.width = videoRef.current.videoWidth * scale;
           canvas.height = videoRef.current.videoHeight * scale;
@@ -215,41 +218,62 @@ export default function VideoAnalysis() {
           if (!ctx) throw new Error("Could not get canvas context");
 
           ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-          const frameDataUri = canvas.toDataURL('image/jpeg', 0.8); // Use JPEG with compression
+          const frameDataUri = canvas.toDataURL('image/jpeg', 0.8);
 
-          // Use the image analysis flow for individual frames
-          const result: AnalyzeDeepfakeImageOutput = await analyzeDeepfake({ photoDataUri: frameDataUri });
-
-          const displayResult: DisplayAnalysisResult = {
-              confidenceScore: result.confidenceScore,
-              explanation: result.analysisReport // Map analysisReport to explanation
-          };
-          setLiveAnalysisResult(displayResult);
-
-          // Add data point to chart
-          setFrameAnalysisData((prevData) => [
-            ...prevData,
-            { time: Date.now(), score: result.confidenceScore },
+          // Run both analyses in parallel
+          const [deepfakeResult, faceSwapResult] = await Promise.all([
+              analyzeDeepfake({ photoDataUri: frameDataUri }).catch(err => {
+                  console.error("General deepfake analysis failed:", err);
+                  return { error: err, type: 'deepfake' }; // Return error object
+              }),
+              detectFaceSwap({ photoDataUri: frameDataUri }).catch(err => {
+                  console.error("Face swap detection failed:", err);
+                  return { error: err, type: 'faceswap' }; // Return error object
+              })
           ]);
 
-           // Only show toast if manually triggered? Or maybe reduce frequency.
-           // For now, commenting out the automatic toast per frame.
-           /*
-           toast({
-             title: "Live Frame Analyzed",
-             description: `Confidence: ${(result.confidenceScore * 100).toFixed(1)}%`,
-           });
-           */
+          let currentError = null;
+
+          // Process deepfake result
+          if ('error' in deepfakeResult) {
+              currentError = `General analysis failed: ${deepfakeResult.error instanceof Error ? deepfakeResult.error.message : "Unknown error"}`;
+              setLiveDeepfakeResult(null); // Clear previous result on error
+          } else {
+              const displayResult: DisplayDeepfakeResult = {
+                  confidenceScore: deepfakeResult.confidenceScore,
+                  explanation: deepfakeResult.analysisReport
+              };
+              setLiveDeepfakeResult(displayResult);
+              // Add general deepfake score to chart data
+              setFrameAnalysisData((prevData) => [
+                ...prevData,
+                { time: Date.now(), score: deepfakeResult.confidenceScore },
+              ]);
+          }
+
+          // Process face swap result
+          if ('error' in faceSwapResult) {
+              const faceSwapError = `Face swap detection failed: ${faceSwapResult.error instanceof Error ? faceSwapResult.error.message : "Unknown error"}`;
+              currentError = currentError ? `${currentError}; ${faceSwapError}` : faceSwapError;
+              setLiveFaceSwapResult(null); // Clear previous result on error
+          } else {
+              setLiveFaceSwapResult(faceSwapResult);
+          }
+
+          if(currentError) {
+            setLiveError(currentError);
+            // Optionally toast the combined error
+            // toast({ title: "Live Analysis Error(s)", description: currentError, variant: "destructive" });
+          }
+
       } catch (err) {
-          console.error("Live frame analysis failed:", err);
+          console.error("Live frame capture/processing failed:", err);
           const errorMessage = err instanceof Error ? err.message : "Unknown error";
           setLiveError(`Live analysis failed: ${errorMessage}`);
-          // Optionally show a toast for live analysis errors
-          // toast({ title: "Live Analysis Error", description: errorMessage, variant: "destructive" });
       } finally {
-          setIsLiveLoading(false); // Indicate processing finished
+          setIsLiveAnalysisLoading(false);
       }
-  }, [isStreaming, isLiveLoading, toast]); // Dependencies added isLiveLoading
+  }, [isStreaming, isLiveAnalysisLoading, toast]); // Added toast
 
    // Effect to stop stream and clear interval on component unmount
   useEffect(() => {
@@ -257,10 +281,9 @@ export default function VideoAnalysis() {
       if (analysisIntervalRef.current) {
         clearInterval(analysisIntervalRef.current);
       }
-      stopStreaming(); // Ensure stream is stopped properly
+      stopStreaming();
     };
   }, []);
-
 
   // --- Common Result Display Logic ---
   const getConfidenceColor = (score: number): string => {
@@ -269,83 +292,109 @@ export default function VideoAnalysis() {
     return 'border-primary text-primary';
   };
 
-  const getScoreLabel = (score: number): string => {
-    if (score > 0.7) return 'High Confidence (Likely Deepfake)';
+  const getScoreLabel = (score: number, context: 'deepfake' | 'faceswap'): string => {
+    const highLabel = context === 'faceswap' ? 'High Confidence (Likely Face Swap)' : 'High Confidence (Likely Deepfake)';
+    const lowLabel = context === 'faceswap' ? 'Low Confidence (Likely No Face Swap)' : 'Low Confidence (Likely Real)';
+    if (score > 0.7) return highLabel;
     if (score > 0.4) return 'Medium Confidence';
-    return 'Low Confidence (Likely Real)';
+    return lowLabel;
   }
 
-  // Unified result rendering function
-  const renderAnalysisResult = (
-    result: DisplayAnalysisResult | null,
-    currentError: string | null,
-    currentLoading: boolean,
+  // Render general deepfake result (used for file upload and live stream)
+  const renderDeepfakeResult = (
+    result: DisplayDeepfakeResult | null,
     titlePrefix: string
   ) => {
-      // Don't show loading indicator for live stream automatic updates
-      // Only show loading for the initial file upload or manual frame analysis
-      const showLoading = currentLoading && (titlePrefix === "Video File" || !analysisIntervalRef.current);
-
-      if (showLoading) {
-          return (
-              <div className="flex flex-col items-center justify-center space-y-2 pt-4">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="text-muted-foreground">Analyzing {titlePrefix.toLowerCase()}...</p>
-                  <Progress value={undefined} className="w-full h-2 animate-pulse" />
-              </div>
-          );
-      }
-      // Only show error if not loading and error exists
-      if (!showLoading && currentError) {
-          return (
-               <Alert variant="destructive" className="mt-4">
-                 <AlertTitle>Analysis Error</AlertTitle>
-                 <AlertDescription>{currentError}</AlertDescription>
-               </Alert>
-          );
-      }
-      // Only show result if not loading, no error, and result exists
-      if (!showLoading && !currentError && result) {
-          return (
-              <Card className="mt-6 border-accent shadow-none">
-                  <CardHeader>
-                      <CardTitle className="text-xl">{titlePrefix} Analysis Results</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                      <div className={`border-l-4 p-4 rounded-none ${getConfidenceColor(result.confidenceScore)} bg-card`}>
-                          <p className="text-sm font-medium text-foreground mb-1">Confidence Score:</p>
-                          <p className={`text-4xl font-bold ${getConfidenceColor(result.confidenceScore).split(' ')[1]}`}>
-                              {(result.confidenceScore * 100).toFixed(1)}%
-                          </p>
-                          <p className="text-sm mt-1">{getScoreLabel(result.confidenceScore)}</p>
-                      </div>
-                      <div>
-                          <h4 className="font-semibold mb-1">Explanation:</h4>
-                          <p className="text-sm text-foreground whitespace-pre-wrap bg-muted/30 p-3 border border-border">
-                              {result.explanation}
-                          </p>
-                      </div>
-                  </CardContent>
-              </Card>
-          );
-      }
-      // Return null if loading, or if there's no result and no error after loading finishes
-      return null;
+      if (!result) return null;
+      return (
+          <Card className="mt-6 border-accent shadow-none">
+              <CardHeader>
+                  <CardTitle className="text-xl">{titlePrefix} Deepfake Analysis Results</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                  <div className={`border-l-4 p-4 rounded-none ${getConfidenceColor(result.confidenceScore)} bg-card`}>
+                      <p className="text-sm font-medium text-foreground mb-1">Confidence Score:</p>
+                      <p className={`text-4xl font-bold ${getConfidenceColor(result.confidenceScore).split(' ')[1]}`}>
+                          {(result.confidenceScore * 100).toFixed(1)}%
+                      </p>
+                      <p className="text-sm mt-1">{getScoreLabel(result.confidenceScore, 'deepfake')}</p>
+                  </div>
+                  <div>
+                      <h4 className="font-semibold mb-1">Explanation / Report:</h4>
+                      <p className="text-sm text-foreground whitespace-pre-wrap bg-muted/30 p-3 border border-border">
+                          {result.explanation}
+                      </p>
+                  </div>
+              </CardContent>
+          </Card>
+      );
   };
+
+    // Render face swap detection result (only for live stream)
+    const renderFaceSwapResult = (result: DetectFaceSwapOutput | null) => {
+        if (!result) return null;
+        return (
+            <Card className="mt-6 border-blue-500 shadow-none">
+                <CardHeader>
+                    <CardTitle className="text-xl">Live Frame Face Swap Detection Results</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <Alert variant={result.isFaceSwapDetected ? "destructive" : "default"} className="rounded-none">
+                        <AlertTitle className="flex items-center gap-2">
+                            {result.isFaceSwapDetected ? <Replace className="text-destructive" /> : <ScanSearch />}
+                            Detection Status
+                        </AlertTitle>
+                        <AlertDescription>
+                            {result.isFaceSwapDetected
+                                ? `A potential face swap was detected with ${ (result.confidenceScore * 100).toFixed(1)}% confidence.`
+                                : `No clear face swap detected (Confidence: ${(result.confidenceScore * 100).toFixed(1)}%).`
+                            }
+                        </AlertDescription>
+                    </Alert>
+                    <div className={`border-l-4 p-4 rounded-none ${getConfidenceColor(result.confidenceScore)} bg-card`}>
+                        <p className="text-sm font-medium text-foreground mb-1">Confidence Score:</p>
+                        <p className={`text-4xl font-bold ${getConfidenceColor(result.confidenceScore).split(' ')[1]}`}>
+                            {(result.confidenceScore * 100).toFixed(1)}%
+                        </p>
+                        <p className="text-sm mt-1">{getScoreLabel(result.confidenceScore, 'faceswap')}</p>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold mb-1">Reasoning:</h4>
+                        <p className="text-sm text-foreground whitespace-pre-wrap bg-muted/30 p-3 border border-border">
+                            {result.reasoning}
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    };
+
 
   // Chart configuration
   const chartConfig = {
     score: {
       label: "Confidence Score",
-      color: "hsl(var(--chart-1))", // Use theme color
+      color: "hsl(var(--chart-1))",
     },
-  } satisfies ChartConfig; // Ensure it satisfies ChartConfig type
+  } satisfies ChartConfig;
+
+  // Filter chart data based on selected time range
+  const filteredChartData = useMemo(() => {
+    const selectedOption = timeRangeOptions.find(opt => opt.value === chartTimeRange);
+    if (!selectedOption || !selectedOption.durationMs) {
+      return frameAnalysisData; // 'all' or invalid selection
+    }
+    const now = Date.now();
+    const cutoffTime = now - selectedOption.durationMs;
+    return frameAnalysisData.filter(point => point.time >= cutoffTime);
+  }, [frameAnalysisData, chartTimeRange]);
+
 
   return (
     <Card className="w-full border-primary shadow-none">
       <CardHeader>
         <CardTitle className="text-2xl flex items-center gap-2"><Video /> Video Deepfake Analysis</CardTitle>
-        <CardDescription>Upload a video file or use your camera for live analysis.</CardDescription>
+        <CardDescription>Upload a video file or use your camera for live analysis (general deepfake and face swap).</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="file" className="w-full">
@@ -373,13 +422,13 @@ export default function VideoAnalysis() {
                   className="w-full sm:w-auto"
                 >
                   {isLoading ? <Loader2 className="animate-spin mr-2" /> : <PixelAnalyzeIcon />}
-                  Analyze Video
+                  Analyze Video (File)
                 </Button>
               </div>
                {error && <p id="file-upload-error" className="text-sm text-destructive mt-2">{error}</p>}
             </div>
 
-            {videoUrl && !isLoading && ( // Only show video preview if not loading analysis
+            {videoUrl && !isLoading && (
               <div className="mt-4 border border-border p-4 flex justify-center items-center bg-muted/50">
                 <video
                   src={videoUrl}
@@ -389,8 +438,17 @@ export default function VideoAnalysis() {
                 />
               </div>
             )}
-            {/* Render file analysis result using the common function */}
-            {renderAnalysisResult(analysisResult, error, isLoading, "Video File")}
+
+            {/* Loading indicator for file upload */}
+            {isLoading && (
+              <div className="flex flex-col items-center justify-center space-y-2 pt-4">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-muted-foreground">Analyzing video file...</p>
+                  <Progress value={undefined} className="w-full h-2 animate-pulse" />
+              </div>
+            )}
+            {/* Render file analysis result */}
+            {!isLoading && analysisResult && renderDeepfakeResult(analysisResult, "Video File")}
           </TabsContent>
 
           {/* Live Stream Tab */}
@@ -405,18 +463,6 @@ export default function VideoAnalysis() {
                      <Button onClick={stopStreaming} variant="destructive" className="w-full sm:w-auto">
                          <StopCircle className="mr-2"/> Stop Camera & Analysis
                      </Button>
-                     {/* Manual analyze button (optional, since it's automatic now) */}
-                     {/*
-                     <Button
-                         onClick={analyzeLiveFrame}
-                         disabled={isLiveLoading || !isStreaming}
-                         className="w-full sm:w-auto"
-                         variant="secondary"
-                      >
-                         {isLiveLoading ? <Loader2 className="animate-spin mr-2" /> : <PixelAnalyzeIcon />}
-                         Analyze Current Frame (Manual)
-                     </Button>
-                     */}
                  </div>
                )}
             </div>
@@ -425,81 +471,118 @@ export default function VideoAnalysis() {
              <div className="mt-4 border border-border p-1 flex justify-center items-center bg-black aspect-video">
                  <video
                      ref={videoRef}
-                     muted // Mute local playback
+                     muted
                      autoPlay
                      playsInline
-                     className="max-w-full max-h-[400px] w-auto transform scale-x-[-1]" // Flip horizontally for mirror effect
+                     className="max-w-full max-h-[400px] w-auto transform scale-x-[-1]"
                      data-ai-hint="live camera feed"
                  />
              </div>
 
-             {/* Placeholder/Instruction text when not streaming */}
              {!isStreaming && !liveError && (
                  <div className="text-center text-muted-foreground py-4">
-                    Click "Start Camera & Live Analysis" to begin. Analysis will run automatically every few seconds.
+                    Click "Start Camera & Live Analysis" to begin. Frames will be analyzed periodically for general deepfakes and face swaps.
                  </div>
              )}
 
+             {/* Live Analysis Loading/Error/Results */}
+             {isLiveAnalysisLoading && (
+                 <div className="flex items-center justify-center space-x-2 pt-2 text-muted-foreground">
+                     <Loader2 className="h-4 w-4 animate-spin" />
+                     <span>Analyzing frame...</span>
+                 </div>
+             )}
+             {liveError && !isLiveAnalysisLoading && (
+                  <Alert variant="destructive" className="mt-4">
+                    <AlertTitle>Live Analysis Error</AlertTitle>
+                    <AlertDescription>{liveError}</AlertDescription>
+                  </Alert>
+             )}
+             {!isLiveAnalysisLoading && (
+                <>
+                    {renderDeepfakeResult(liveDeepfakeResult, "Live Frame")}
+                    {renderFaceSwapResult(liveFaceSwapResult)}
+                </>
+             )}
+
+
             {/* Live Analysis Chart */}
-            {isStreaming && frameAnalysisData.length > 1 && (
+            {(isStreaming || (!isStreaming && frameAnalysisData.length > 0)) && ( // Show chart if streaming or if data exists after stopping
                  <Card className="mt-6 border-secondary shadow-none">
-                    <CardHeader>
-                       <CardTitle className="text-xl">Live Confidence Score Over Time</CardTitle>
-                       <CardDescription>Tracks the deepfake confidence score during the live session.</CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                       <div className="space-y-1.5">
+                            <CardTitle className="text-xl">Live Confidence Score Over Time</CardTitle>
+                            <CardDescription>Tracks the general deepfake confidence score during the live session.</CardDescription>
+                        </div>
+                        {/* Time Range Selector */}
+                        <div className="w-[150px]">
+                            <Select value={chartTimeRange} onValueChange={(value) => setChartTimeRange(value as ChartTimeRangeOption)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select time range" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {timeRangeOptions.map(option => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </CardHeader>
                     <CardContent>
-                       <ChartContainer config={chartConfig} className="h-[200px] w-full">
-                          <ResponsiveContainer width="100%" height="100%">
-                             <LineChart
-                                data={frameAnalysisData}
-                                margin={{ top: 5, right: 10, left: -25, bottom: 5 }} // Adjusted left margin
-                             >
-                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                                <XAxis
-                                  dataKey="time"
-                                  type="number"
-                                  domain={['dataMin', 'dataMax']}
-                                  tickFormatter={(unixTime) => format(new Date(unixTime), 'HH:mm:ss')} // Format time
-                                  stroke="hsl(var(--foreground))"
-                                  tick={{ fontSize: 10 }}
-                                />
-                                <YAxis
-                                   domain={[0, 1]} // Score is between 0 and 1
-                                   stroke="hsl(var(--foreground))"
-                                   tick={{ fontSize: 10 }}
-                                />
-                                <RechartsTooltip
-                                  content={<ChartTooltipContent indicator="line" />}
-                                  cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 1 }}
-                                  wrapperStyle={{ outline: 'none' }}
-                                />
-                                <Line
-                                  dataKey="score"
-                                  type="monotone"
-                                  stroke="var(--color-score)" // Use chart config color
-                                  strokeWidth={2}
-                                  dot={false} // Hide dots for cleaner look
-                                  isAnimationActive={false} // Disable animation for live data
-                                />
-                             </LineChart>
-                          </ResponsiveContainer>
-                       </ChartContainer>
+                       {filteredChartData.length > 1 ? (
+                           <ChartContainer config={chartConfig} className="h-[200px] w-full">
+                              <ResponsiveContainer width="100%" height="100%">
+                                 <LineChart
+                                    data={filteredChartData}
+                                    margin={{ top: 5, right: 10, left: -25, bottom: 5 }}
+                                 >
+                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                                    <XAxis
+                                      dataKey="time"
+                                      type="number"
+                                      domain={['dataMin', 'dataMax']}
+                                      tickFormatter={(unixTime) => format(new Date(unixTime), 'HH:mm:ss')}
+                                      stroke="hsl(var(--foreground))"
+                                      tick={{ fontSize: 10 }}
+                                    />
+                                    <YAxis
+                                       domain={[0, 1]}
+                                       stroke="hsl(var(--foreground))"
+                                       tick={{ fontSize: 10 }}
+                                       label={{ value: 'Confidence', angle: -90, position: 'insideLeft', offset: -15, style: { textAnchor: 'middle', fontSize: '10px', fill: 'hsl(var(--foreground))' } }}
+                                    />
+                                    <RechartsTooltip
+                                      content={<ChartTooltipContent indicator="line" labelFormatter={(value, payload) => payload && payload[0] ? format(new Date(payload[0].payload.time), 'HH:mm:ss') : ''} />}
+                                      cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 1 }}
+                                      wrapperStyle={{ outline: 'none' }}
+                                    />
+                                    <Line
+                                      dataKey="score"
+                                      type="monotone"
+                                      stroke="var(--color-score)"
+                                      strokeWidth={2}
+                                      dot={false}
+                                      isAnimationActive={false}
+                                    />
+                                 </LineChart>
+                              </ResponsiveContainer>
+                           </ChartContainer>
+                       ) : (
+                           <div className="text-center text-muted-foreground py-8">
+                               {isStreaming ? "Waiting for more data points to display chart..." : "No historical data to display."}
+                           </div>
+                       )}
                     </CardContent>
                  </Card>
             )}
-
-            {/* Display latest live analysis result OR loading indicator OR error */}
-            {/* The common render function handles error, and latest result display */}
-            {renderAnalysisResult(liveAnalysisResult, liveError, isLiveLoading && !analysisIntervalRef.current, "Live Frame")}
-
 
             {/* Note about live analysis */}
              {isStreaming && (
                  <Alert variant="default" className="mt-4">
                     <AlertDescription>
-                       Live analysis automatically processes frames every few seconds. The chart shows the confidence score history.
-                       {isLiveLoading && !liveAnalysisResult && <span className="italic"> (Waiting for first analysis...)</span>}
-                       {isLiveLoading && liveAnalysisResult && <span className="italic"> (Analyzing next frame...)</span>}
+                       Live analysis automatically processes frames every few seconds. The chart shows the confidence score history. Select a time range to focus the chart view.
                     </AlertDescription>
                  </Alert>
              )}
