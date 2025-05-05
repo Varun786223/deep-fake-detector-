@@ -164,7 +164,7 @@ export default function VideoAnalysis() {
       toast({ title: "Live Stream Started", description: "Camera feed is active."});
       analysisIntervalRef.current = setInterval(() => {
         analyzeLiveFrame();
-      }, 3000); // Analyze every 3 seconds (adjust interval as needed, consider cost/performance)
+      }, 3000); // Analyze every 3 seconds
       setFrameAnalysisData([]); // Reset chart data
       setLiveDeepfakeResult(null); // Clear previous results
       setLiveFaceSwapResult(null); // Clear previous results
@@ -287,9 +287,9 @@ export default function VideoAnalysis() {
 
   // --- Common Result Display Logic ---
   const getConfidenceColor = (score: number): string => {
-    if (score > 0.7) return 'border-destructive text-destructive';
-    if (score > 0.4) return 'border-accent text-accent-foreground';
-    return 'border-primary text-primary';
+    if (score > 0.7) return 'border-destructive text-destructive'; // Red
+    if (score > 0.4) return 'border-accent text-accent'; // Pink
+    return 'border-primary text-primary'; // Green
   };
 
   const getScoreLabel = (score: number, context: 'deepfake' | 'faceswap'): string => {
@@ -303,13 +303,15 @@ export default function VideoAnalysis() {
   // Render general deepfake result (used for file upload and live stream)
   const renderDeepfakeResult = (
     result: DisplayDeepfakeResult | null,
-    titlePrefix: string
+    titlePrefix: string,
+    titleColor: string = 'text-accent', // Default to accent (pink)
+    borderColor: string = 'border-accent' // Default to accent (pink)
   ) => {
       if (!result) return null;
       return (
-          <Card className="mt-6 border-accent shadow-none">
+          <Card className={`mt-6 ${borderColor}`}>
               <CardHeader>
-                  <CardTitle className="text-xl">{titlePrefix} Deepfake Analysis Results</CardTitle>
+                  <CardTitle className={`text-xl ${titleColor}`}>{titlePrefix} Deepfake Analysis Results</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                   <div className={`border-l-4 p-4 rounded-none ${getConfidenceColor(result.confidenceScore)} bg-card`}>
@@ -334,9 +336,9 @@ export default function VideoAnalysis() {
     const renderFaceSwapResult = (result: DetectFaceSwapOutput | null) => {
         if (!result) return null;
         return (
-            <Card className="mt-6 border-blue-500 shadow-none">
+            <Card className="mt-6 border-secondary"> {/* Use secondary border (cyan) */}
                 <CardHeader>
-                    <CardTitle className="text-xl">Live Frame Face Swap Detection Results</CardTitle>
+                    <CardTitle className="text-xl text-secondary">Live Frame Face Swap Detection Results</CardTitle> {/* Secondary color title */}
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <Alert variant={result.isFaceSwapDetected ? "destructive" : "default"} className="rounded-none">
@@ -370,11 +372,11 @@ export default function VideoAnalysis() {
     };
 
 
-  // Chart configuration
+  // Chart configuration using theme variables
   const chartConfig = {
     score: {
       label: "Confidence Score",
-      color: "hsl(var(--chart-1))",
+      color: "hsl(var(--chart-1))", // Use chart-1 (Bright Green)
     },
   } satisfies ChartConfig;
 
@@ -391,16 +393,16 @@ export default function VideoAnalysis() {
 
 
   return (
-    <Card className="w-full border-primary shadow-none">
+    <Card className="w-full border-primary"> {/* Primary border */}
       <CardHeader>
-        <CardTitle className="text-2xl flex items-center gap-2"><Video /> Video Deepfake Analysis</CardTitle>
+        <CardTitle className="text-2xl flex items-center gap-2 text-primary"><Video /> Video Deepfake Analysis</CardTitle> {/* Primary color title */}
         <CardDescription>Upload a video file or use your camera for live analysis (general deepfake and face swap).</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="file" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="file" className="flex items-center gap-2"><Upload className="w-4 h-4"/> Upload File</TabsTrigger>
-            <TabsTrigger value="live" className="flex items-center gap-2"><Camera className="w-4 h-4"/> Live Stream</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-6 shadcn-tabs-list"> {/* Added class */}
+            <TabsTrigger value="file" className="flex items-center gap-2 shadcn-tabs-trigger"><Upload className="w-4 h-4"/> Upload File</TabsTrigger> {/* Added class */}
+            <TabsTrigger value="live" className="flex items-center gap-2 shadcn-tabs-trigger"><Camera className="w-4 h-4"/> Live Stream</TabsTrigger> {/* Added class */}
           </TabsList>
 
           {/* File Upload Tab */}
@@ -420,6 +422,7 @@ export default function VideoAnalysis() {
                   onClick={handleAnalyzeVideoFile}
                   disabled={!file || isLoading}
                   className="w-full sm:w-auto"
+                  variant="secondary" // Cyan button
                 >
                   {isLoading ? <Loader2 className="animate-spin mr-2" /> : <PixelAnalyzeIcon />}
                   Analyze Video (File)
@@ -447,15 +450,15 @@ export default function VideoAnalysis() {
                   <Progress value={undefined} className="w-full h-2 animate-pulse" />
               </div>
             )}
-            {/* Render file analysis result */}
-            {!isLoading && analysisResult && renderDeepfakeResult(analysisResult, "Video File")}
+            {/* Render file analysis result - Use Primary color for file results */}
+            {!isLoading && analysisResult && renderDeepfakeResult(analysisResult, "Video File", "text-primary", "border-primary")}
           </TabsContent>
 
           {/* Live Stream Tab */}
           <TabsContent value="live" className="space-y-6">
             <div className="flex flex-col items-center gap-4">
                {!isStreaming ? (
-                 <Button onClick={startStreaming} className="w-full sm:w-auto">
+                 <Button onClick={startStreaming} className="w-full sm:w-auto" variant="secondary"> {/* Cyan Button */}
                    <Camera className="mr-2"/> Start Camera & Live Analysis
                  </Button>
                ) : (
@@ -500,7 +503,9 @@ export default function VideoAnalysis() {
              )}
              {!isLiveAnalysisLoading && (
                 <>
+                    {/* Render live deepfake result with default accent colors (pink) */}
                     {renderDeepfakeResult(liveDeepfakeResult, "Live Frame")}
+                    {/* Render live face swap result (uses secondary/cyan internally) */}
                     {renderFaceSwapResult(liveFaceSwapResult)}
                 </>
              )}
@@ -508,10 +513,10 @@ export default function VideoAnalysis() {
 
             {/* Live Analysis Chart */}
             {(isStreaming || (!isStreaming && frameAnalysisData.length > 0)) && ( // Show chart if streaming or if data exists after stopping
-                 <Card className="mt-6 border-secondary shadow-none">
+                 <Card className="mt-6 border-primary"> {/* Primary border for chart card */}
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                        <div className="space-y-1.5">
-                            <CardTitle className="text-xl">Live Confidence Score Over Time</CardTitle>
+                            <CardTitle className="text-xl text-primary">Live Confidence Score Over Time</CardTitle> {/* Primary color title */}
                             <CardDescription>Tracks the general deepfake confidence score during the live session.</CardDescription>
                         </div>
                         {/* Time Range Selector */}
@@ -538,30 +543,32 @@ export default function VideoAnalysis() {
                                     data={filteredChartData}
                                     margin={{ top: 5, right: 10, left: -25, bottom: 5 }}
                                  >
-                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" /> {/* Dimmed border */}
                                     <XAxis
                                       dataKey="time"
                                       type="number"
                                       domain={['dataMin', 'dataMax']}
                                       tickFormatter={(unixTime) => format(new Date(unixTime), 'HH:mm:ss')}
                                       stroke="hsl(var(--foreground))"
-                                      tick={{ fontSize: 10 }}
+                                      tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} // Ensure tick text is visible
                                     />
                                     <YAxis
                                        domain={[0, 1]}
                                        stroke="hsl(var(--foreground))"
-                                       tick={{ fontSize: 10 }}
-                                       label={{ value: 'Confidence', angle: -90, position: 'insideLeft', offset: -15, style: { textAnchor: 'middle', fontSize: '10px', fill: 'hsl(var(--foreground))' } }}
+                                       tick={{ fontSize: 10, fill: 'hsl(var(--foreground))' }} // Ensure tick text is visible
+                                       label={{ value: 'Confidence', angle: -90, position: 'insideLeft', offset: -15, style: { textAnchor: 'middle', fontSize: '10px', fill: 'hsl(var(--foreground))' } }} // Ensure label is visible
                                     />
                                     <RechartsTooltip
                                       content={<ChartTooltipContent indicator="line" labelFormatter={(value, payload) => payload && payload[0] ? format(new Date(payload[0].payload.time), 'HH:mm:ss') : ''} />}
                                       cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 1 }}
-                                      wrapperStyle={{ outline: 'none' }}
+                                      wrapperStyle={{ outline: 'none' }} // Style tooltip via CSS layers
+                                      itemStyle={{ color: 'hsl(var(--popover-foreground))'}} // Ensure tooltip item text visible
+                                      labelStyle={{ color: 'hsl(var(--popover-foreground))'}} // Ensure tooltip label visible
                                     />
                                     <Line
                                       dataKey="score"
                                       type="monotone"
-                                      stroke="var(--color-score)"
+                                      stroke="var(--color-score)" // Uses chartConfig color (green)
                                       strokeWidth={2}
                                       dot={false}
                                       isAnimationActive={false}

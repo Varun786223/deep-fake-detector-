@@ -14,20 +14,20 @@ export default function Home() {
         </h1>
 
         <Tabs defaultValue="image" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
-            <TabsTrigger value="image" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-4 mb-6 shadcn-tabs-list">
+            <TabsTrigger value="image" className="flex items-center gap-2 shadcn-tabs-trigger">
               <ImageIcon className="w-5 h-5" />
               Image
             </TabsTrigger>
-            <TabsTrigger value="video" className="flex items-center gap-2">
+            <TabsTrigger value="video" className="flex items-center gap-2 shadcn-tabs-trigger">
               <Video className="w-5 h-5" />
               Video
             </TabsTrigger>
-            <TabsTrigger value="report" className="flex items-center gap-2">
+            <TabsTrigger value="report" className="flex items-center gap-2 shadcn-tabs-trigger">
               <AlertTriangle className="w-5 h-5" />
               Report
             </TabsTrigger>
-            <TabsTrigger value="learn" className="flex items-center gap-2">
+            <TabsTrigger value="learn" className="flex items-center gap-2 shadcn-tabs-trigger">
                <FileQuestion className="w-5 h-5" />
               Learn
             </TabsTrigger>

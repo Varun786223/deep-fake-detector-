@@ -8,86 +8,168 @@ body {
 
 @layer base {
   :root {
-    --background: 30 67% 95%; /* Light Tan */
-    --foreground: 0 0% 9%; /* Dark Gray for better contrast on Tan */
-    --card: 30 67% 95%; /* Light Tan */
-    --card-foreground: 0 0% 9%; /* Dark Gray */
-    --popover: 30 67% 95%; /* Light Tan */
-    --popover-foreground: 0 0% 9%; /* Dark Gray */
-    --primary: 120 33% 30%; /* Dark Green */
-    --primary-foreground: 0 0% 98%; /* Light Gray/White */
-    --secondary: 30 30% 90%; /* Muted Tan */
-    --secondary-foreground: 120 33% 30%; /* Dark Green */
-    --muted: 30 30% 90%; /* Muted Tan */
-    --muted-foreground: 30 10% 50%; /* Muted Grayish Tan */
-    --accent: 45 100% 55%; /* Bright Yellow */
-    --accent-foreground: 0 0% 9%; /* Dark Gray/Black for contrast on Yellow */
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 30 30% 85%; /* Slightly Darker Tan */
-    --input: 30 30% 85%; /* Slightly Darker Tan */
-    --ring: 45 100% 55%; /* Bright Yellow */
-    --chart-1: 120 33% 30%; /* Dark Green */
-    --chart-2: 45 100% 55%; /* Bright Yellow */
-    --chart-3: 120 33% 50%; /* Lighter Green */
-    --chart-4: 45 80% 65%; /* Lighter Yellow */
-    --chart-5: 30 20% 70%; /* Grayish Tan */
-    --radius: 0rem; /* Remove rounded corners */
-    --sidebar-background: 30 30% 90%; /* Muted Tan */
-    --sidebar-foreground: 120 33% 30%; /* Dark Green */
-    --sidebar-primary: 120 33% 30%; /* Dark Green */
-    --sidebar-primary-foreground: 0 0% 98%; /* Light Gray/White */
-    --sidebar-accent: 45 100% 55%; /* Bright Yellow */
-    --sidebar-accent-foreground: 0 0% 9%; /* Dark Gray/Black */
-    --sidebar-border: 30 30% 85%; /* Slightly Darker Tan */
-    --sidebar-ring: 45 100% 55%; /* Bright Yellow */
+    /* Codedex-Inspired Dark Theme (Default) */
+    --background: 240 30% 10%; /* Dark Purple/Blue */
+    --foreground: 210 15% 95%; /* Off-White */
+
+    --card: 240 30% 12%; /* Slightly Lighter Dark Background */
+    --card-foreground: 210 15% 95%; /* Off-White */
+
+    --popover: 240 30% 8%; /* Darker Background */
+    --popover-foreground: 210 15% 95%; /* Off-White */
+
+    --primary: 120 70% 50%; /* Bright Green */
+    --primary-foreground: 240 30% 10%; /* Dark Background for contrast on Green */
+
+    --secondary: 180 70% 50%; /* Bright Cyan */
+    --secondary-foreground: 240 30% 10%; /* Dark Background for contrast on Cyan */
+
+    --muted: 240 30% 20%; /* Muted Dark Background */
+    --muted-foreground: 210 15% 60%; /* Muted Off-White */
+
+    --accent: 300 70% 60%; /* Bright Pink/Magenta */
+    --accent-foreground: 240 30% 10%; /* Dark Background for contrast on Pink */
+
+    --destructive: 0 80% 60%; /* Bright Red */
+    --destructive-foreground: 210 15% 95%; /* Off-White */
+
+    --border: 120 70% 50%; /* Bright Green Border */
+    --input: 240 30% 15%; /* Slightly lighter dark bg for input */
+    --ring: 300 70% 60%; /* Bright Pink/Magenta for focus rings */
+
+    --chart-1: 120 70% 50%; /* Bright Green */
+    --chart-2: 180 70% 50%; /* Bright Cyan */
+    --chart-3: 300 70% 60%; /* Bright Pink */
+    --chart-4: 60 70% 50%;  /* Bright Yellow */
+    --chart-5: 30 70% 50%;  /* Bright Orange */
+
+    --radius: 0rem; /* Sharp corners */
+
+    /* Sidebar specific colors - mirroring the main theme */
+    --sidebar-background: 240 30% 12%; /* Slightly Lighter Dark Background */
+    --sidebar-foreground: 210 15% 95%; /* Off-White */
+    --sidebar-primary: 120 70% 50%; /* Bright Green */
+    --sidebar-primary-foreground: 240 30% 10%; /* Dark Background */
+    --sidebar-accent: 300 70% 60%; /* Bright Pink */
+    --sidebar-accent-foreground: 240 30% 10%; /* Dark Background */
+    --sidebar-border: 120 70% 50%; /* Bright Green Border */
+    --sidebar-ring: 300 70% 60%; /* Bright Pink */
   }
+
   .dark {
-    /* Define dark theme colors based on the primary palette, inverted or adjusted */
-    --background: 120 10% 10%; /* Very Dark Green */
-    --foreground: 30 67% 95%; /* Light Tan */
-    --card: 120 10% 12%; /* Slightly Lighter Dark Green */
-    --card-foreground: 30 67% 95%; /* Light Tan */
-    --popover: 120 10% 10%; /* Very Dark Green */
-    --popover-foreground: 30 67% 95%; /* Light Tan */
-    --primary: 30 67% 95%; /* Light Tan */
-    --primary-foreground: 120 33% 30%; /* Dark Green */
-    --secondary: 120 15% 20%; /* Dark Muted Green */
-    --secondary-foreground: 30 67% 95%; /* Light Tan */
-    --muted: 120 15% 20%; /* Dark Muted Green */
-    --muted-foreground: 30 30% 70%; /* Lighter Grayish Tan */
-    --accent: 45 100% 55%; /* Bright Yellow */
-    --accent-foreground: 0 0% 9%; /* Dark Gray/Black */
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 120 10% 25%; /* Darker Green Border */
-    --input: 120 10% 25%; /* Darker Green Border */
-    --ring: 45 100% 55%; /* Bright Yellow */
-    --chart-1: 30 67% 95%; /* Light Tan */
-    --chart-2: 45 100% 55%; /* Bright Yellow */
-    --chart-3: 30 67% 85%; /* Lighter Tan */
-    --chart-4: 45 80% 65%; /* Lighter Yellow */
-    --chart-5: 30 30% 70%; /* Grayish Tan */
-     --sidebar-background: 120 10% 12%; /* Slightly Lighter Dark Green */
-    --sidebar-foreground: 30 67% 95%; /* Light Tan */
-    --sidebar-primary: 30 67% 95%; /* Light Tan */
-    --sidebar-primary-foreground: 120 33% 30%; /* Dark Green */
-    --sidebar-accent: 45 100% 55%; /* Bright Yellow */
-    --sidebar-accent-foreground: 0 0% 9%; /* Dark Gray/Black */
-    --sidebar-border: 120 10% 25%; /* Darker Green Border */
-    --sidebar-ring: 45 100% 55%; /* Bright Yellow */
+    /* Keep dark theme the same as :root for this design */
+     --background: 240 30% 10%;
+    --foreground: 210 15% 95%;
+    --card: 240 30% 12%;
+    --card-foreground: 210 15% 95%;
+    --popover: 240 30% 8%;
+    --popover-foreground: 210 15% 95%;
+    --primary: 120 70% 50%;
+    --primary-foreground: 240 30% 10%;
+    --secondary: 180 70% 50%;
+    --secondary-foreground: 240 30% 10%;
+    --muted: 240 30% 20%;
+    --muted-foreground: 210 15% 60%;
+    --accent: 300 70% 60%;
+    --accent-foreground: 240 30% 10%;
+    --destructive: 0 80% 60%;
+    --destructive-foreground: 210 15% 95%;
+    --border: 120 70% 50%;
+    --input: 240 30% 15%;
+    --ring: 300 70% 60%;
+    --chart-1: 120 70% 50%;
+    --chart-2: 180 70% 50%;
+    --chart-3: 300 70% 60%;
+    --chart-4: 60 70% 50%;
+    --chart-5: 30 70% 50%;
+    --sidebar-background: 240 30% 12%;
+    --sidebar-foreground: 210 15% 95%;
+    --sidebar-primary: 120 70% 50%;
+    --sidebar-primary-foreground: 240 30% 10%;
+    --sidebar-accent: 300 70% 60%;
+    --sidebar-accent-foreground: 240 30% 10%;
+    --sidebar-border: 120 70% 50%;
+    --sidebar-ring: 300 70% 60%;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border; /* Use the primary green border color by default */
   }
   body {
     @apply bg-background text-foreground;
   }
   /* Increase base font size for pixel font readability */
   html {
-    @apply text-lg;
+    @apply text-lg; /* or adjust as needed */
   }
+
+  /* Ensure inputs have visible text */
+   input, textarea, select {
+       @apply text-foreground;
+   }
+
+   /* Ensure placeholder text is visible */
+    ::placeholder {
+         @apply text-muted-foreground opacity-70;
+    }
+
+    /* Ensure ShadCN components use the theme colors correctly */
+    .bg-card { background-color: hsl(var(--card)); }
+    .text-card-foreground { color: hsl(var(--card-foreground)); }
+    .bg-popover { background-color: hsl(var(--popover)); }
+    .text-popover-foreground { color: hsl(var(--popover-foreground)); }
+    .bg-primary { background-color: hsl(var(--primary)); }
+    .text-primary-foreground { color: hsl(var(--primary-foreground)); }
+    .bg-secondary { background-color: hsl(var(--secondary)); }
+    .text-secondary-foreground { color: hsl(var(--secondary-foreground)); }
+    .bg-muted { background-color: hsl(var(--muted)); }
+    .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+    .bg-accent { background-color: hsl(var(--accent)); }
+    .text-accent-foreground { color: hsl(var(--accent-foreground)); }
+    .bg-destructive { background-color: hsl(var(--destructive)); }
+    .text-destructive-foreground { color: hsl(var(--destructive-foreground)); }
+    .border-input { border-color: hsl(var(--input)); } /* Use input color for input borders */
+    .border-border { border-color: hsl(var(--border)); }
+
+    /* Adjust TabList background and trigger styles */
+    .shadcn-tabs-list { /* Add a class to TabsList if needed, or target directly */
+        @apply bg-transparent border border-primary;
+    }
+    .shadcn-tabs-trigger { /* Add a class to TabsTrigger if needed, or target directly */
+         @apply text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none;
+    }
+
+    /* Style progress bar */
+    .shadcn-progress-indicator { /* Add a class to ProgressIndicator if needed */
+        @apply bg-primary;
+    }
+    .shadcn-progress-root { /* Add a class to ProgressRoot if needed */
+         @apply bg-muted;
+    }
+
+    /* Style Alert borders */
+    .shadcn-alert { /* Add class if needed */
+        @apply border; /* Ensure alerts have the default border */
+    }
+    .shadcn-alert-destructive { /* Add class if needed */
+         @apply border-destructive text-destructive [&>svg]:text-destructive;
+    }
+
+     /* Style Chart Colors */
+    .recharts-cartesian-axis-tick-value, .recharts-legend-item-text {
+        fill: hsl(var(--foreground)); /* Ensure chart text is visible */
+    }
+    .recharts-cartesian-grid line {
+        stroke: hsl(var(--border) / 0.5); /* Dimmed border color for grid */
+    }
+    .recharts-tooltip-wrapper .text-xs { /* Adjust tooltip text */
+         color: hsl(var(--popover-foreground));
+    }
+     .recharts-tooltip-wrapper { /* Adjust tooltip background */
+         background-color: hsl(var(--popover) / 0.9) !important; /* Needs important due to inline styles */
+         border-color: hsl(var(--border)) !important;
+     }
+
 }

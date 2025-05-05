@@ -9,7 +9,7 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-none border bg-card text-card-foreground shadow-sm", // Changed rounded-lg to rounded-none
+      "rounded-none border border-border bg-card text-card-foreground shadow-none", // Use theme border, bg-card, text-card-foreground, remove shadow
       className
     )}
     {...props}
@@ -31,24 +31,24 @@ CardHeader.displayName = "CardHeader"
 
 const CardTitle = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  React.HTMLAttributes<HTMLDivElement> // Use HTMLHeadingElement for semantic correctness
 >(({ className, ...props }, ref) => (
-  <div
+  <h2 // Change div to h2 or appropriate heading level
     ref={ref}
     className={cn(
-      "text-2xl font-semibold leading-none tracking-tight",
+      "text-2xl font-semibold leading-none tracking-tight text-primary", // Use primary color for titles
       className
     )}
-    {...props}
+    {...props} // Use primary color for titles
   />
 ))
 CardTitle.displayName = "CardTitle"
 
 const CardDescription = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  HTMLParagraphElement, // Use HTMLParagraphElement
+  React.HTMLAttributes<HTMLParagraphElement> // Use HTMLParagraphElement
 >(({ className, ...props }, ref) => (
-  <div
+  <p // Change div to p
     ref={ref}
     className={cn("text-sm text-muted-foreground", className)}
     {...props}

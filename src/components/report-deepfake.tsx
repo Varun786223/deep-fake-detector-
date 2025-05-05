@@ -58,9 +58,9 @@ export default function ReportDeepfake() {
   };
 
   return (
-    <Card className="w-full border-destructive shadow-none">
+    <Card className="w-full border-destructive"> {/* Destructive border (red) */}
       <CardHeader>
-        <CardTitle className="text-2xl flex items-center gap-2"><AlertTriangle /> Report Suspected Deepfake</CardTitle>
+        <CardTitle className="text-2xl flex items-center gap-2 text-destructive"><AlertTriangle /> Report Suspected Deepfake</CardTitle> {/* Destructive color title */}
         <CardDescription>
           If you've encountered content you believe is a harmful deepfake, please provide details below.
         </CardDescription>
@@ -79,7 +79,7 @@ export default function ReportDeepfake() {
                       id="sourceUrl"
                       placeholder="https://example.com/deepfake-video"
                       {...field}
-                      className="bg-card"
+                      className="bg-input" // Use input background
                     />
                   </FormControl>
                   <FormDescription>
@@ -102,7 +102,7 @@ export default function ReportDeepfake() {
                       placeholder="Describe why you believe this is a deepfake and any potential harm it might cause..."
                       rows={5}
                       {...field}
-                      className="bg-card"
+                       className="bg-input" // Use input background
                     />
                   </FormControl>
                    <FormDescription>
@@ -125,7 +125,7 @@ export default function ReportDeepfake() {
                       type="email"
                       placeholder="you@example.com"
                       {...field}
-                      className="bg-card"
+                       className="bg-input" // Use input background
                     />
                   </FormControl>
                   <FormDescription>
@@ -136,7 +136,7 @@ export default function ReportDeepfake() {
               )}
             />
 
-            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
+            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto" variant="default"> {/* Default (primary/green) button */}
               {isSubmitting ? (
                 <Loader2 className="animate-spin mr-2" />
               ) : (

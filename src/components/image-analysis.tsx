@@ -167,7 +167,7 @@ export default function ImageAnalysis() {
 
   const getConfidenceColor = (score: number): string => {
     if (score > 0.7) return 'border-destructive text-destructive'; // High confidence - Red
-    if (score > 0.4) return 'border-accent text-accent-foreground'; // Medium confidence - Yellow/Orange
+    if (score > 0.4) return 'border-accent text-accent'; // Medium confidence - Pink/Magenta
     return 'border-primary text-primary'; // Low confidence - Green
   };
 
@@ -183,9 +183,9 @@ export default function ImageAnalysis() {
   const isLoading = isDeepfakeLoading || isFaceSwapLoading;
 
   return (
-    <Card className="w-full border-primary shadow-none">
+    <Card className="w-full border-primary"> {/* Keep primary border */}
       <CardHeader>
-        <CardTitle className="text-2xl flex items-center gap-2">
+        <CardTitle className="text-2xl flex items-center gap-2 text-primary"> {/* Title in Primary Color */}
           <ScanSearch /> Image Analysis
         </CardTitle>
         <CardDescription>Upload an image to check if it might be a deepfake or contain a face swap.</CardDescription>
@@ -228,7 +228,7 @@ export default function ImageAnalysis() {
                 onClick={handleAnalyzeDeepfake}
                 disabled={!file || isLoading}
                 className="w-full sm:w-auto"
-                variant="secondary"
+                variant="secondary" // Use Secondary (Cyan)
             >
                 {isDeepfakeLoading ? (
                     <Loader2 className="animate-spin mr-2" />
@@ -241,7 +241,7 @@ export default function ImageAnalysis() {
                 onClick={handleDetectFaceSwap}
                 disabled={!file || isLoading}
                 className="w-full sm:w-auto"
-                variant="secondary"
+                variant="secondary" // Use Secondary (Cyan)
              >
                 {isFaceSwapLoading ? (
                     <Loader2 className="animate-spin mr-2" />
@@ -262,9 +262,9 @@ export default function ImageAnalysis() {
 
         {/* Display Results Separately */}
         {deepfakeAnalysisResult && !isDeepfakeLoading && (
-          <Card className="mt-6 border-accent shadow-none">
+          <Card className="mt-6 border-accent"> {/* Border Accent (Pink) */}
             <CardHeader>
-              <CardTitle className="text-xl">General Deepfake Analysis Results</CardTitle>
+              <CardTitle className="text-xl text-accent">General Deepfake Analysis Results</CardTitle> {/* Title in Accent Color */}
             </CardHeader>
             <CardContent className="space-y-4">
               <div className={`border-l-4 p-4 rounded-none ${getConfidenceColor(deepfakeAnalysisResult.confidenceScore)} bg-card`}>
@@ -286,9 +286,9 @@ export default function ImageAnalysis() {
         )}
 
         {faceSwapAnalysisResult && !isFaceSwapLoading && (
-          <Card className="mt-6 border-blue-500 shadow-none"> {/* Use a different border color for distinction */}
+          <Card className="mt-6 border-secondary"> {/* Border Secondary (Cyan) */}
             <CardHeader>
-              <CardTitle className="text-xl">Face Swap Detection Results</CardTitle>
+              <CardTitle className="text-xl text-secondary">Face Swap Detection Results</CardTitle> {/* Title in Secondary Color */}
             </CardHeader>
             <CardContent className="space-y-4">
                <Alert variant={faceSwapAnalysisResult.isFaceSwapDetected ? "destructive" : "default"} className="rounded-none">
