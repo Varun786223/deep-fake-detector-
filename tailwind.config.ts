@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { fontFamily } from "tailwindcss/defaultTheme"; // Import default theme
 
 export default {
     darkMode: ["class"],
@@ -9,6 +10,11 @@ export default {
   ],
   theme: {
   	extend: {
+        fontFamily: {
+           // Add VT323 using the CSS variable defined in layout.tsx
+           sans: ["var(--font-vt323)", ...fontFamily.sans],
+           mono: ["var(--font-vt323)", ...fontFamily.mono], // Optional: Use for mono as well if needed
+         },
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
@@ -63,8 +69,8 @@ export default {
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
+  			md: 'calc(var(--radius) - 0px)', // Maintain 0rem for md
+            sm: 'calc(var(--radius) - 0px)' // Maintain 0rem for sm
   		},
   		keyframes: {
   			'accordion-down': {
@@ -92,3 +98,4 @@ export default {
   },
   plugins: [require("tailwindcss-animate")],
 } satisfies Config;
+

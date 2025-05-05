@@ -3,78 +3,79 @@
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-vt323), monospace; /* Apply pixelated font */
 }
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    --background: 30 67% 95%; /* Light Tan */
+    --foreground: 0 0% 9%; /* Dark Gray for better contrast on Tan */
+    --card: 30 67% 95%; /* Light Tan */
+    --card-foreground: 0 0% 9%; /* Dark Gray */
+    --popover: 30 67% 95%; /* Light Tan */
+    --popover-foreground: 0 0% 9%; /* Dark Gray */
+    --primary: 120 33% 30%; /* Dark Green */
+    --primary-foreground: 0 0% 98%; /* Light Gray/White */
+    --secondary: 30 30% 90%; /* Muted Tan */
+    --secondary-foreground: 120 33% 30%; /* Dark Green */
+    --muted: 30 30% 90%; /* Muted Tan */
+    --muted-foreground: 30 10% 50%; /* Muted Grayish Tan */
+    --accent: 45 100% 55%; /* Bright Yellow */
+    --accent-foreground: 0 0% 9%; /* Dark Gray/Black for contrast on Yellow */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 30 30% 85%; /* Slightly Darker Tan */
+    --input: 30 30% 85%; /* Slightly Darker Tan */
+    --ring: 45 100% 55%; /* Bright Yellow */
+    --chart-1: 120 33% 30%; /* Dark Green */
+    --chart-2: 45 100% 55%; /* Bright Yellow */
+    --chart-3: 120 33% 50%; /* Lighter Green */
+    --chart-4: 45 80% 65%; /* Lighter Yellow */
+    --chart-5: 30 20% 70%; /* Grayish Tan */
+    --radius: 0rem; /* Remove rounded corners */
+    --sidebar-background: 30 30% 90%; /* Muted Tan */
+    --sidebar-foreground: 120 33% 30%; /* Dark Green */
+    --sidebar-primary: 120 33% 30%; /* Dark Green */
+    --sidebar-primary-foreground: 0 0% 98%; /* Light Gray/White */
+    --sidebar-accent: 45 100% 55%; /* Bright Yellow */
+    --sidebar-accent-foreground: 0 0% 9%; /* Dark Gray/Black */
+    --sidebar-border: 30 30% 85%; /* Slightly Darker Tan */
+    --sidebar-ring: 45 100% 55%; /* Bright Yellow */
   }
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+    /* Define dark theme colors based on the primary palette, inverted or adjusted */
+    --background: 120 10% 10%; /* Very Dark Green */
+    --foreground: 30 67% 95%; /* Light Tan */
+    --card: 120 10% 12%; /* Slightly Lighter Dark Green */
+    --card-foreground: 30 67% 95%; /* Light Tan */
+    --popover: 120 10% 10%; /* Very Dark Green */
+    --popover-foreground: 30 67% 95%; /* Light Tan */
+    --primary: 30 67% 95%; /* Light Tan */
+    --primary-foreground: 120 33% 30%; /* Dark Green */
+    --secondary: 120 15% 20%; /* Dark Muted Green */
+    --secondary-foreground: 30 67% 95%; /* Light Tan */
+    --muted: 120 15% 20%; /* Dark Muted Green */
+    --muted-foreground: 30 30% 70%; /* Lighter Grayish Tan */
+    --accent: 45 100% 55%; /* Bright Yellow */
+    --accent-foreground: 0 0% 9%; /* Dark Gray/Black */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 120 10% 25%; /* Darker Green Border */
+    --input: 120 10% 25%; /* Darker Green Border */
+    --ring: 45 100% 55%; /* Bright Yellow */
+    --chart-1: 30 67% 95%; /* Light Tan */
+    --chart-2: 45 100% 55%; /* Bright Yellow */
+    --chart-3: 30 67% 85%; /* Lighter Tan */
+    --chart-4: 45 80% 65%; /* Lighter Yellow */
+    --chart-5: 30 30% 70%; /* Grayish Tan */
+     --sidebar-background: 120 10% 12%; /* Slightly Lighter Dark Green */
+    --sidebar-foreground: 30 67% 95%; /* Light Tan */
+    --sidebar-primary: 30 67% 95%; /* Light Tan */
+    --sidebar-primary-foreground: 120 33% 30%; /* Dark Green */
+    --sidebar-accent: 45 100% 55%; /* Bright Yellow */
+    --sidebar-accent-foreground: 0 0% 9%; /* Dark Gray/Black */
+    --sidebar-border: 120 10% 25%; /* Darker Green Border */
+    --sidebar-ring: 45 100% 55%; /* Bright Yellow */
   }
 }
 
@@ -84,5 +85,9 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Increase base font size for pixel font readability */
+  html {
+    @apply text-lg;
   }
 }
