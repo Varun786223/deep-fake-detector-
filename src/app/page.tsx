@@ -42,8 +42,8 @@ export default function Home() {
       {/* Added padding for smaller screens and adjusted larger screen padding */}
       <div className="w-full max-w-4xl">
         {/* Consider adding a logo or thematic graphic here */}
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-6 md:mb-8 text-primary drop-shadow-sm">
-          Deep Fake Detector // v1.0
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-center mb-8 md:mb-10 text-primary drop-shadow-md">
+          Deep Fake Detector
         </h1>
 
         <Tabs defaultValue="image" className="w-full">
@@ -90,5 +90,3 @@ export default function Home() {
     </main>
   );
 }
-
-    
