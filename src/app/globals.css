@@ -1,14 +1,65 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
   font-family: var(--font-vt323), monospace; /* Apply pixelated font */
+  @apply transition-colors duration-200; /* Add transition for theme changes */
 }
 
 @layer base {
   :root {
-    /* Codedex-Inspired Dark Theme (Default) */
+    /* --- Light Theme --- */
+    --background: 210 15% 98%; /* Very Light Gray */
+    --foreground: 240 30% 10%; /* Dark Purple/Blue */
+
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 240 30% 15%; /* Slightly Darker Purple/Blue */
+
+    --popover: 0 0% 100%; /* White */
+    --popover-foreground: 240 30% 15%; /* Slightly Darker Purple/Blue */
+
+    --primary: 120 60% 40%; /* Darker Green */
+    --primary-foreground: 210 15% 98%; /* Very Light Gray for contrast on Green */
+
+    --secondary: 180 60% 40%; /* Darker Cyan */
+    --secondary-foreground: 210 15% 98%; /* Very Light Gray for contrast on Cyan */
+
+    --muted: 210 15% 90%; /* Light Gray */
+    --muted-foreground: 240 30% 30%; /* Muted Dark Purple/Blue */
+
+    --accent: 300 60% 50%; /* Darker Pink/Magenta */
+    --accent-foreground: 210 15% 98%; /* Very Light Gray for contrast on Pink */
+
+    --destructive: 0 70% 50%; /* Darker Red */
+    --destructive-foreground: 210 15% 98%; /* Very Light Gray */
+
+    --border: 120 60% 70%; /* Lighter Green Border */
+    --input: 210 15% 92%; /* Slightly darker light bg for input */
+    --ring: 300 60% 60%; /* Lighter Pink/Magenta for focus rings */
+
+    --chart-1: 120 60% 45%; /* Darker Green */
+    --chart-2: 180 60% 45%; /* Darker Cyan */
+    --chart-3: 300 60% 55%; /* Darker Pink */
+    --chart-4: 60 60% 45%;  /* Darker Yellow */
+    --chart-5: 30 60% 45%;  /* Darker Orange */
+
+    --radius: 0rem; /* Sharp corners */
+
+    /* Sidebar specific colors - Light Theme */
+    --sidebar-background: 210 15% 95%; /* Very Light Gray */
+    --sidebar-foreground: 240 30% 10%; /* Dark Purple/Blue */
+    --sidebar-primary: 120 60% 40%; /* Darker Green */
+    --sidebar-primary-foreground: 210 15% 98%; /* Very Light Gray */
+    --sidebar-accent: 300 60% 50%; /* Darker Pink */
+    --sidebar-accent-foreground: 210 15% 98%; /* Very Light Gray */
+    --sidebar-border: 120 60% 70%; /* Lighter Green Border */
+    --sidebar-ring: 300 60% 60%; /* Lighter Pink */
+  }
+
+  .dark {
+    /* --- Dark Theme (Codedex-Inspired) --- */
     --background: 240 30% 10%; /* Dark Purple/Blue */
     --foreground: 210 15% 95%; /* Off-White */
 
@@ -43,9 +94,7 @@ body {
     --chart-4: 60 70% 50%;  /* Bright Yellow */
     --chart-5: 30 70% 50%;  /* Bright Orange */
 
-    --radius: 0rem; /* Sharp corners */
-
-    /* Sidebar specific colors - mirroring the main theme */
+    /* Sidebar specific colors - Dark Theme */
     --sidebar-background: 240 30% 12%; /* Slightly Lighter Dark Background */
     --sidebar-foreground: 210 15% 95%; /* Off-White */
     --sidebar-primary: 120 70% 50%; /* Bright Green */
@@ -55,62 +104,26 @@ body {
     --sidebar-border: 120 70% 50%; /* Bright Green Border */
     --sidebar-ring: 300 70% 60%; /* Bright Pink */
   }
-
-  .dark {
-    /* Keep dark theme the same as :root for this design */
-     --background: 240 30% 10%;
-    --foreground: 210 15% 95%;
-    --card: 240 30% 12%;
-    --card-foreground: 210 15% 95%;
-    --popover: 240 30% 8%;
-    --popover-foreground: 210 15% 95%;
-    --primary: 120 70% 50%;
-    --primary-foreground: 240 30% 10%;
-    --secondary: 180 70% 50%;
-    --secondary-foreground: 240 30% 10%;
-    --muted: 240 30% 20%;
-    --muted-foreground: 210 15% 60%;
-    --accent: 300 70% 60%;
-    --accent-foreground: 240 30% 10%;
-    --destructive: 0 80% 60%;
-    --destructive-foreground: 210 15% 95%;
-    --border: 120 70% 50%;
-    --input: 240 30% 15%;
-    --ring: 300 70% 60%;
-    --chart-1: 120 70% 50%;
-    --chart-2: 180 70% 50%;
-    --chart-3: 300 70% 60%;
-    --chart-4: 60 70% 50%;
-    --chart-5: 30 70% 50%;
-    --sidebar-background: 240 30% 12%;
-    --sidebar-foreground: 210 15% 95%;
-    --sidebar-primary: 120 70% 50%;
-    --sidebar-primary-foreground: 240 30% 10%;
-    --sidebar-accent: 300 70% 60%;
-    --sidebar-accent-foreground: 240 30% 10%;
-    --sidebar-border: 120 70% 50%;
-    --sidebar-ring: 300 70% 60%;
-  }
 }
 
 @layer base {
   * {
-    @apply border-border; /* Use the primary green border color by default */
+    @apply border-border; /* Use the theme border color by default */
   }
   body {
     @apply bg-background text-foreground;
   }
   /* Increase base font size for pixel font readability */
   html {
-    @apply text-lg; /* or adjust as needed */
+    @apply text-lg; /* Adjust as needed */
   }
 
   /* Ensure inputs have visible text */
    input, textarea, select {
-       @apply text-foreground;
+       @apply text-foreground bg-input placeholder:text-muted-foreground; /* Ensure bg-input is applied */
    }
 
-   /* Ensure placeholder text is visible */
+   /* Ensure placeholder text is visible and styled appropriately */
     ::placeholder {
          @apply text-muted-foreground opacity-70;
     }
@@ -132,44 +145,92 @@ body {
     .text-destructive-foreground { color: hsl(var(--destructive-foreground)); }
     .border-input { border-color: hsl(var(--input)); } /* Use input color for input borders */
     .border-border { border-color: hsl(var(--border)); }
+    .ring-ring { color: hsl(var(--ring)); } /* Ensure ring uses theme color */
 
     /* Adjust TabList background and trigger styles */
-    .shadcn-tabs-list { /* Add a class to TabsList if needed, or target directly */
+    .shadcn-tabs-list {
         @apply bg-transparent border border-primary;
     }
-    .shadcn-tabs-trigger { /* Add a class to TabsTrigger if needed, or target directly */
-         @apply text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none;
+    .shadcn-tabs-trigger {
+         @apply text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none focus-visible:ring-1 focus-visible:ring-ring;
     }
 
     /* Style progress bar */
-    .shadcn-progress-indicator { /* Add a class to ProgressIndicator if needed */
-        @apply bg-primary;
+    .shadcn-progress-root {
+         @apply bg-muted overflow-hidden; /* Ensure overflow is hidden */
     }
-    .shadcn-progress-root { /* Add a class to ProgressRoot if needed */
-         @apply bg-muted;
+    .shadcn-progress-indicator {
+        @apply bg-primary;
     }
 
     /* Style Alert borders */
-    .shadcn-alert { /* Add class if needed */
-        @apply border; /* Ensure alerts have the default border */
+    .shadcn-alert {
+        @apply border;
     }
-    .shadcn-alert-destructive { /* Add class if needed */
+    .shadcn-alert-destructive {
          @apply border-destructive text-destructive [&>svg]:text-destructive;
     }
 
      /* Style Chart Colors */
-    .recharts-cartesian-axis-tick-value, .recharts-legend-item-text {
+    .recharts-cartesian-axis-tick-value, .recharts-legend-item-text, .recharts-label {
         fill: hsl(var(--foreground)); /* Ensure chart text is visible */
+        font-size: 10px; /* Consistent small font size for charts */
     }
     .recharts-cartesian-grid line {
-        stroke: hsl(var(--border) / 0.5); /* Dimmed border color for grid */
+        stroke: hsl(var(--border) / 0.4); /* Dimmer border color for grid */
     }
+     .recharts-cartesian-axis line, .recharts-cartesian-axis-tick line {
+        stroke: hsl(var(--border) / 0.6); /* Dimmer border for axis lines */
+     }
     .recharts-tooltip-wrapper .text-xs { /* Adjust tooltip text */
          color: hsl(var(--popover-foreground));
     }
      .recharts-tooltip-wrapper { /* Adjust tooltip background */
          background-color: hsl(var(--popover) / 0.9) !important; /* Needs important due to inline styles */
-         border-color: hsl(var(--border)) !important;
+         border: 1px solid hsl(var(--border)) !important;
+         border-radius: 0 !important; /* Sharp corners for tooltip */
+         padding: 8px !important;
+         box-shadow: none !important;
+     }
+     .recharts-tooltip-item {
+         color: hsl(var(--popover-foreground)) !important;
+     }
+      .recharts-tooltip-label {
+         color: hsl(var(--popover-foreground)) !important;
+         margin-bottom: 4px !important;
+         font-weight: bold;
+     }
+
+     /* Focus Rings */
+    *:focus-visible {
+        @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+    }
+
+     /* Ensure buttons have focus style */
+    .shadcn-button:focus-visible {
+         @apply ring-2 ring-ring ring-offset-2;
+    }
+     /* Ensure inputs have focus style */
+     .shadcn-input:focus-visible {
+          @apply ring-2 ring-ring ring-offset-2 border-ring; /* Highlight border on focus */
+     }
+     .shadcn-textarea:focus-visible {
+           @apply ring-2 ring-ring ring-offset-2 border-ring;
+     }
+     .shadcn-select-trigger:focus-visible {
+            @apply ring-2 ring-ring ring-offset-2;
+     }
+
+     /* Accordion styling */
+     .shadcn-accordion-trigger:focus-visible {
+            @apply ring-1 ring-ring; /* Subtle ring for accordion */
+     }
+
+      /* Links */
+     a {
+        @apply text-primary hover:text-primary/80 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none rounded-sm;
      }
 
 }
+
+    

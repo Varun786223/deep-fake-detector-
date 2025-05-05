@@ -4,33 +4,43 @@
 import type { ChangeEvent } from 'react';
 import React, { useState, useCallback } from 'react';
 import { analyzeDeepfake, type AnalyzeDeepfakeOutput } from '@/ai/flows/analyze-deepfake';
-import { detectFaceSwap, type DetectFaceSwapOutput } from '@/ai/flows/detect-face-swap'; // Import face swap flow
+import { detectFaceSwap, type DetectFaceSwapOutput } from '@/ai/flows/detect-face-swap';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"; // Added CardFooter
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Upload, Loader2, ScanSearch, Replace } from 'lucide-react'; // Added Replace icon
+import { Loader2 } from 'lucide-react'; // Keep Loader2 for animation
 import Image from 'next/image';
 import { useToast } from "@/hooks/use-toast";
-import { Separator } from '@/components/ui/separator'; // Added Separator
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-// Define the pixelated Upload icon using SVG
-const PixelUploadIcon = () => (
+// --- Pixelated SVG Icons ---
+
+// Pixelated ScanSearch Icon
+const PixelScanSearchIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="butt" strokeLinejoin="miter">
-    <path d="M4 16v4h16v-4M12 4v12M8 8l4-4 4 4" />
+    {/* Magnifying glass part */}
+    <path d="M10 14a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
+    <path d="M13 13l3 3" />
+    {/* Box part */}
+    <path d="M4 4h4v4H4z" />
+    <path d="M4 16h4v4H4z" />
+    <path d="M16 4h4v4h-4z" />
+    <path d="M16 16h4v4h-4z" />
+    <path d="M6 2v2 M18 2v2 M6 20v2 M18 20v2 M2 6h2 M2 18h2 M20 6h2 M20 18h2" />
   </svg>
 );
 
-// Define the pixelated Analyze icon using SVG
+// Pixelated Analyze Icon (Reuse from previous)
 const PixelAnalyzeIcon = () => (
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="butt" strokeLinejoin="miter">
     <path d="M10 18v-4h4v4h-4zM6 14v-4h4v4H6zM14 14v-4h4v4h-4zM10 10V6h4v4h-4zM6 6V2h4v4H6zM14 6V2h4v4h-4zM2 22h20M2 2h20" />
   </svg>
 );
 
-// Define the pixelated FaceSwap icon using SVG (Improved)
+// Pixelated FaceSwap Icon (Reuse from previous)
 const PixelFaceSwapIcon = () => (
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="butt" strokeLinejoin="miter">
     {/* Face 1 */}
@@ -42,6 +52,13 @@ const PixelFaceSwapIcon = () => (
     {/* Swap Arrows (Simplified) */}
     <path d="M10 8h4 M12 10l2-2-2-2 M14 16h-4 M12 14l-2 2 2 2" />
  </svg>
+);
+
+// Pixelated AlertTriangle Icon (for error display)
+const PixelAlertTriangleIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="butt" strokeLinejoin="miter">
+    <path d="M2 20h20L12 4 2 20zm10-12v4m0 4v2" />
+  </svg>
 );
 
 
@@ -57,56 +74,46 @@ export default function ImageAnalysis() {
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
+    setError(null); // Clear previous errors on new file selection
+    setDeepfakeAnalysisResult(null); // Clear results
+    setFaceSwapAnalysisResult(null); // Clear results
+    setPreviewUrl(null); // Clear preview
+    setFile(null); // Clear file
+
     if (selectedFile) {
-      // Basic image type validation
       if (!selectedFile.type.startsWith('image/')) {
-        setError("Invalid file type. Please upload an image (JPEG, PNG, GIF, etc.).");
-        setFile(null);
-        setPreviewUrl(null);
-        setDeepfakeAnalysisResult(null);
-        setFaceSwapAnalysisResult(null);
+        setError("Invalid file type. Please upload an image (e.g., JPEG, PNG).");
         return;
       }
-      // Limit file size (e.g., 10MB)
       const maxSizeMB = 10;
       if (selectedFile.size > maxSizeMB * 1024 * 1024) {
-         setError(`File size exceeds ${maxSizeMB}MB limit.`);
-         setFile(null);
-         setPreviewUrl(null);
-         setDeepfakeAnalysisResult(null);
-         setFaceSwapAnalysisResult(null);
+         setError(`File too large. Please upload an image under ${maxSizeMB}MB.`);
          return;
       }
 
       setFile(selectedFile);
-      setError(null); // Clear previous errors
-      setDeepfakeAnalysisResult(null); // Clear previous results
-      setFaceSwapAnalysisResult(null); // Clear previous results
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewUrl(reader.result as string);
       };
       reader.readAsDataURL(selectedFile);
-    } else {
-      setFile(null);
-      setPreviewUrl(null);
     }
   };
 
   const handleAnalyzeDeepfake = useCallback(async () => {
     if (!file || !previewUrl) {
-      setError("Please select an image file first.");
+      setError("No image selected. Please upload an image first.");
       return;
     }
 
     setIsDeepfakeLoading(true);
     setError(null);
-    setDeepfakeAnalysisResult(null); // Clear previous deepfake result only
-    setFaceSwapAnalysisResult(null); // Also clear face swap result
+    setDeepfakeAnalysisResult(null);
+    setFaceSwapAnalysisResult(null);
 
     try {
       if (typeof previewUrl !== 'string' || !previewUrl.includes(';base64,')) {
-        throw new Error("Invalid image data format.");
+        throw new Error("Internal error: Invalid image data format.");
       }
 
       const result = await analyzeDeepfake({ photoDataUri: previewUrl });
@@ -117,11 +124,11 @@ export default function ImageAnalysis() {
       });
     } catch (err) {
       console.error("Deepfake analysis failed:", err);
-      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred during analysis.";
-      setError(`Deepfake analysis failed: ${errorMessage}`);
+      const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
+      setError(`Analysis Failed: ${errorMessage}. Please try again or use a different image.`);
        toast({
         title: "Deepfake Analysis Error",
-        description: `Failed to analyze the image for deepfakes. ${errorMessage}`,
+        description: `Could not analyze the image for general deepfakes. ${errorMessage}`,
         variant: "destructive",
       });
     } finally {
@@ -131,18 +138,18 @@ export default function ImageAnalysis() {
 
   const handleDetectFaceSwap = useCallback(async () => {
       if (!file || !previewUrl) {
-        setError("Please select an image file first.");
+        setError("No image selected. Please upload an image first.");
         return;
       }
 
       setIsFaceSwapLoading(true);
       setError(null);
-      setFaceSwapAnalysisResult(null); // Clear previous face swap result only
-      setDeepfakeAnalysisResult(null); // Also clear general deepfake result
+      setFaceSwapAnalysisResult(null);
+      setDeepfakeAnalysisResult(null);
 
       try {
         if (typeof previewUrl !== 'string' || !previewUrl.includes(';base64,')) {
-          throw new Error("Invalid image data format.");
+          throw new Error("Internal error: Invalid image data format.");
         }
 
         const result = await detectFaceSwap({ photoDataUri: previewUrl });
@@ -153,11 +160,11 @@ export default function ImageAnalysis() {
         });
       } catch (err) {
         console.error("Face swap detection failed:", err);
-        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred during detection.";
-        setError(`Face swap detection failed: ${errorMessage}`);
+        const errorMessage = err instanceof Error ? err.message : "An unknown error occurred.";
+        setError(`Detection Failed: ${errorMessage}. Please try again or use a different image.`);
          toast({
           title: "Face Swap Detection Error",
-          description: `Failed to analyze the image for face swaps. ${errorMessage}`,
+          description: `Could not analyze the image for face swaps. ${errorMessage}`,
           variant: "destructive",
         });
       } finally {
@@ -165,10 +172,10 @@ export default function ImageAnalysis() {
       }
     }, [file, previewUrl, toast]);
 
-  const getConfidenceColor = (score: number): string => {
-    if (score > 0.7) return 'border-destructive text-destructive'; // High confidence - Red
-    if (score > 0.4) return 'border-accent text-accent'; // Medium confidence - Pink/Magenta
-    return 'border-primary text-primary'; // Low confidence - Green
+  const getConfidenceStyling = (score: number): { borderClass: string; textClass: string; bgClass: string } => {
+    if (score > 0.7) return { borderClass: 'border-destructive', textClass: 'text-destructive', bgClass: 'bg-destructive/10' }; // High confidence - Red
+    if (score > 0.4) return { borderClass: 'border-accent', textClass: 'text-accent', bgClass: 'bg-accent/10' }; // Medium confidence - Pink/Magenta
+    return { borderClass: 'border-primary', textClass: 'text-primary', bgClass: 'bg-primary/10' }; // Low confidence - Green
   };
 
   const getScoreLabel = (score: number, context: 'deepfake' | 'faceswap'): string => {
@@ -179,149 +186,207 @@ export default function ImageAnalysis() {
     return lowLabel;
   }
 
-  // Combined loading state
   const isLoading = isDeepfakeLoading || isFaceSwapLoading;
 
   return (
-    <Card className="w-full border-primary"> {/* Keep primary border */}
-      <CardHeader>
-        <CardTitle className="text-2xl flex items-center gap-2 text-primary"> {/* Title in Primary Color */}
-          <ScanSearch /> Image Analysis
-        </CardTitle>
-        <CardDescription>Upload an image to check if it might be a deepfake or contain a face swap.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-2">
-          <Label htmlFor="image-upload" className="text-lg font-medium">Upload Image</Label>
-          <div className="flex items-center gap-4">
-            <Input
-              id="image-upload"
-              type="file"
-              accept="image/*"
-              onChange={handleFileChange}
-              className="flex-grow file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-secondary file:text-secondary-foreground hover:file:bg-secondary/80 cursor-pointer"
-              aria-describedby="file-error"
-            />
-             {/* Removed Upload button, actions below */}
-          </div>
-           {error && (
-             <p id="file-error" className="text-sm text-destructive mt-2">{error}</p>
-           )}
-        </div>
-
-         {previewUrl && (
-            <div className="mt-4 border border-border p-4 flex justify-center items-center bg-muted/50">
-                <Image
-                src={previewUrl}
-                alt="Image preview"
-                width={300}
-                height={300}
-                className="object-contain max-h-[300px] w-auto"
-                data-ai-hint="uploaded image preview"
-                />
+    <TooltipProvider>
+      <Card className="w-full border-primary">
+        <CardHeader>
+          <CardTitle className="text-2xl flex items-center gap-2 text-primary">
+            <PixelScanSearchIcon /> Image Analysis
+          </CardTitle>
+          <CardDescription>Upload an image to check if it might be a deepfake or contain a face swap.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="image-upload" className="text-lg font-medium">Upload Image</Label>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <Input
+                id="image-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="flex-grow file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-secondary file:text-secondary-foreground hover:file:bg-secondary/80 cursor-pointer"
+                aria-describedby="file-error-message"
+                aria-invalid={!!error}
+              />
+              {/* Action Buttons moved below preview */}
             </div>
-         )}
-
-         {/* Action Buttons */}
-         <div className="flex flex-col sm:flex-row items-center gap-4 mt-4">
-             <Button
-                onClick={handleAnalyzeDeepfake}
-                disabled={!file || isLoading}
-                className="w-full sm:w-auto"
-                variant="secondary" // Use Secondary (Cyan)
-            >
-                {isDeepfakeLoading ? (
-                    <Loader2 className="animate-spin mr-2" />
-                ) : (
-                    <PixelAnalyzeIcon />
-                )}
-                Analyze Deepfake (General)
-            </Button>
-             <Button
-                onClick={handleDetectFaceSwap}
-                disabled={!file || isLoading}
-                className="w-full sm:w-auto"
-                variant="secondary" // Use Secondary (Cyan)
-             >
-                {isFaceSwapLoading ? (
-                    <Loader2 className="animate-spin mr-2" />
-                ) : (
-                     <PixelFaceSwapIcon />
-                )}
-                Detect Face Swap
-             </Button>
-         </div>
-
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center space-y-2 pt-4">
-             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-             <p className="text-muted-foreground">Analyzing image...</p>
-             <Progress value={undefined} className="w-full h-2 animate-pulse" /> {/* Indeterminate progress */}
-          </div>
-        )}
-
-        {/* Display Results Separately */}
-        {deepfakeAnalysisResult && !isDeepfakeLoading && (
-          <Card className="mt-6 border-accent"> {/* Border Accent (Pink) */}
-            <CardHeader>
-              <CardTitle className="text-xl text-accent">General Deepfake Analysis Results</CardTitle> {/* Title in Accent Color */}
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className={`border-l-4 p-4 rounded-none ${getConfidenceColor(deepfakeAnalysisResult.confidenceScore)} bg-card`}>
-                 <p className="text-sm font-medium text-foreground mb-1">Confidence Score:</p>
-                 <p className={`text-4xl font-bold ${getConfidenceColor(deepfakeAnalysisResult.confidenceScore).split(' ')[1]}`}>
-                    {(deepfakeAnalysisResult.confidenceScore * 100).toFixed(1)}%
-                 </p>
-                 <p className="text-sm mt-1">{getScoreLabel(deepfakeAnalysisResult.confidenceScore, 'deepfake')}</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-1">Analysis Report:</h4>
-                <p className="text-sm text-foreground whitespace-pre-wrap bg-muted/30 p-3 border border-border">
-                  {deepfakeAnalysisResult.analysisReport}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {faceSwapAnalysisResult && !isFaceSwapLoading && (
-          <Card className="mt-6 border-secondary"> {/* Border Secondary (Cyan) */}
-            <CardHeader>
-              <CardTitle className="text-xl text-secondary">Face Swap Detection Results</CardTitle> {/* Title in Secondary Color */}
-            </CardHeader>
-            <CardContent className="space-y-4">
-               <Alert variant={faceSwapAnalysisResult.isFaceSwapDetected ? "destructive" : "default"} className="rounded-none">
-                 <AlertTitle className="flex items-center gap-2">
-                   {faceSwapAnalysisResult.isFaceSwapDetected ? <Replace className="text-destructive" /> : <ScanSearch />} {/* Icon changes based on detection */}
-                    Detection Status
-                 </AlertTitle>
+             {error && (
+               <Alert variant="destructive" id="file-error-message" className="mt-2">
+                 <PixelAlertTriangleIcon />
+                 <AlertTitle>Upload Error</AlertTitle>
                  <AlertDescription>
-                    {faceSwapAnalysisResult.isFaceSwapDetected
-                        ? `A potential face swap was detected with ${ (faceSwapAnalysisResult.confidenceScore * 100).toFixed(1)}% confidence.`
-                        : `No clear face swap detected (Confidence: ${(faceSwapAnalysisResult.confidenceScore * 100).toFixed(1)}%).`
-                    }
+                   {error}
                  </AlertDescription>
                </Alert>
+             )}
+          </div>
 
-              <div className={`border-l-4 p-4 rounded-none ${getConfidenceColor(faceSwapAnalysisResult.confidenceScore)} bg-card`}>
-                 <p className="text-sm font-medium text-foreground mb-1">Confidence Score:</p>
-                 <p className={`text-4xl font-bold ${getConfidenceColor(faceSwapAnalysisResult.confidenceScore).split(' ')[1]}`}>
-                    {(faceSwapAnalysisResult.confidenceScore * 100).toFixed(1)}%
-                 </p>
-                 <p className="text-sm mt-1">{getScoreLabel(faceSwapAnalysisResult.confidenceScore, 'faceswap')}</p>
+           {previewUrl && (
+              <div className="mt-4 border border-border p-4 flex flex-col items-center gap-4 bg-muted/50">
+                  <Image
+                  src={previewUrl}
+                  alt="Image preview"
+                  width={300}
+                  height={300}
+                  className="object-contain max-h-[300px] w-auto border border-border" // Added border to image itself
+                  data-ai-hint="uploaded image preview"
+                  />
+                   {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
+                       <Tooltip>
+                         <TooltipTrigger asChild>
+                           <Button
+                              onClick={handleAnalyzeDeepfake}
+                              disabled={!file || isLoading}
+                              className="w-full sm:w-auto"
+                              variant="secondary"
+                              aria-label="Analyze for general deepfake signs"
+                          >
+                              {isDeepfakeLoading ? (
+                                  <Loader2 className="animate-spin mr-2" />
+                              ) : (
+                                  <PixelAnalyzeIcon />
+                              )}
+                              Analyze Deepfake (General)
+                          </Button>
+                         </TooltipTrigger>
+                         <TooltipContent>
+                           <p>Check for common signs of deepfakes like artifacts and inconsistencies.</p>
+                         </TooltipContent>
+                       </Tooltip>
+                       <Tooltip>
+                         <TooltipTrigger asChild>
+                           <Button
+                              onClick={handleDetectFaceSwap}
+                              disabled={!file || isLoading}
+                              className="w-full sm:w-auto"
+                              variant="secondary"
+                              aria-label="Detect potential face swap"
+                           >
+                              {isFaceSwapLoading ? (
+                                  <Loader2 className="animate-spin mr-2" />
+                              ) : (
+                                   <PixelFaceSwapIcon />
+                              )}
+                              Detect Face Swap
+                           </Button>
+                         </TooltipTrigger>
+                         <TooltipContent>
+                           <p>Specifically look for evidence of face replacement.</p>
+                         </TooltipContent>
+                       </Tooltip>
+                  </div>
               </div>
+           )}
 
-              <div>
-                <h4 className="font-semibold mb-1">Reasoning:</h4>
-                <p className="text-sm text-foreground whitespace-pre-wrap bg-muted/30 p-3 border border-border">
-                  {faceSwapAnalysisResult.reasoning}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </CardContent>
-    </Card>
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center space-y-3 pt-4">
+               <div className="flex items-center space-x-2 text-muted-foreground">
+                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                 <p>Analyzing image, please wait...</p>
+               </div>
+               <Progress value={undefined} className="w-3/4 h-2 animate-pulse shadcn-progress-root" indicatorClassName="shadcn-progress-indicator" />
+            </div>
+          )}
+
+          {/* --- Results Section --- */}
+          {!isLoading && (deepfakeAnalysisResult || faceSwapAnalysisResult) && (
+            <div className="space-y-6 pt-4">
+              <h3 className="text-xl font-semibold text-center text-foreground border-b border-border pb-2">Analysis Results</h3>
+
+              {/* Display General Deepfake Results */}
+              {deepfakeAnalysisResult && (
+                <Card className={`border-accent ${getConfidenceStyling(deepfakeAnalysisResult.confidenceScore).bgClass}`}>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2 text-accent">
+                      <PixelAnalyzeIcon /> General Deepfake Analysis
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className={`border-l-4 p-3 rounded-none ${getConfidenceStyling(deepfakeAnalysisResult.confidenceScore).borderClass} bg-card`}>
+                       <p className="text-xs font-medium text-muted-foreground mb-1">Confidence Score</p>
+                       <div className="flex items-baseline gap-2">
+                         <p className={`text-3xl font-bold ${getConfidenceStyling(deepfakeAnalysisResult.confidenceScore).textClass}`}>
+                            {(deepfakeAnalysisResult.confidenceScore * 100).toFixed(1)}%
+                         </p>
+                         <p className={`text-xs font-semibold ${getConfidenceStyling(deepfakeAnalysisResult.confidenceScore).textClass}`}>
+                           {getScoreLabel(deepfakeAnalysisResult.confidenceScore, 'deepfake')}
+                         </p>
+                       </div>
+                       {/* Optional: Add a simple bar indicator */}
+                       <Progress
+                          value={deepfakeAnalysisResult.confidenceScore * 100}
+                          className="h-1 mt-2 shadcn-progress-root"
+                          indicatorClassName={`shadcn-progress-indicator ${getConfidenceStyling(deepfakeAnalysisResult.confidenceScore).borderClass.replace('border-', 'bg-')}`} // Use confidence color for bar
+                        />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-1 text-foreground">Analysis Report:</h4>
+                      <p className="text-sm text-foreground whitespace-pre-wrap bg-muted/30 p-3 border border-border rounded-sm">
+                        {deepfakeAnalysisResult.analysisReport}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Display Face Swap Results */}
+              {faceSwapAnalysisResult && (
+                <Card className={`border-secondary ${getConfidenceStyling(faceSwapAnalysisResult.confidenceScore).bgClass}`}>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2 text-secondary">
+                       <PixelFaceSwapIcon /> Face Swap Detection
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                     <Alert variant={faceSwapAnalysisResult.isFaceSwapDetected ? "destructive" : "default"} className="rounded-none">
+                       <AlertTitle className="flex items-center gap-2">
+                         {faceSwapAnalysisResult.isFaceSwapDetected ? <PixelAlertTriangleIcon /> : <PixelScanSearchIcon />} {/* Use pixel icons */}
+                          Detection Status
+                       </AlertTitle>
+                       <AlertDescription>
+                          {faceSwapAnalysisResult.isFaceSwapDetected
+                              ? `A potential face swap was detected.`
+                              : `No clear face swap detected.`
+                          }
+                       </AlertDescription>
+                     </Alert>
+
+                    <div className={`border-l-4 p-3 rounded-none ${getConfidenceStyling(faceSwapAnalysisResult.confidenceScore).borderClass} bg-card`}>
+                       <p className="text-xs font-medium text-muted-foreground mb-1">Confidence Score</p>
+                       <div className="flex items-baseline gap-2">
+                           <p className={`text-3xl font-bold ${getConfidenceStyling(faceSwapAnalysisResult.confidenceScore).textClass}`}>
+                              {(faceSwapAnalysisResult.confidenceScore * 100).toFixed(1)}%
+                           </p>
+                           <p className={`text-xs font-semibold ${getConfidenceStyling(faceSwapAnalysisResult.confidenceScore).textClass}`}>
+                              {getScoreLabel(faceSwapAnalysisResult.confidenceScore, 'faceswap')}
+                           </p>
+                       </div>
+                       <Progress
+                          value={faceSwapAnalysisResult.confidenceScore * 100}
+                          className="h-1 mt-2 shadcn-progress-root"
+                          indicatorClassName={`shadcn-progress-indicator ${getConfidenceStyling(faceSwapAnalysisResult.confidenceScore).borderClass.replace('border-', 'bg-')}`}
+                        />
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold mb-1 text-foreground">Reasoning:</h4>
+                      <p className="text-sm text-foreground whitespace-pre-wrap bg-muted/30 p-3 border border-border rounded-sm">
+                        {faceSwapAnalysisResult.reasoning}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }
+
+    
