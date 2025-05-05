@@ -96,10 +96,9 @@ export function OnboardingTutorial() {
         className="sm:max-w-[550px] p-0 border-primary"
         onInteractOutside={onInteractOutside}
         onEscapeKeyDown={onEscapeKeyDown}
-        aria-labelledby="tutorial-title"
-        aria-describedby="tutorial-description"
+        aria-describedby="tutorial-description" // Keep description here
         >
-        <DialogHeader className="p-6 pb-2">
+        <DialogHeader className="p-6 pb-2" aria-labelledby="tutorial-title"> {/* Move labelledby here */}
           <DialogTitle id="tutorial-title" className="text-2xl text-primary">Welcome to Deepfake Detector!</DialogTitle>
           <DialogDescription id="tutorial-description" className="text-base">
             A quick guide to get you started.
@@ -173,5 +172,3 @@ export function OnboardingTutorial() {
     </Dialog>
   );
 }
-
-    
