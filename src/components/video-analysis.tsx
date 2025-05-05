@@ -3,6 +3,7 @@
 import type { ChangeEvent } from 'react';
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { analyzeDeepfakeVideo, type AnalyzeDeepfakeVideoOutput } from '@/ai/flows/analyze-deepfake-video';
+import { analyzeDeepfake } from '@/ai/flows/analyze-deepfake'; // Import analyzeDeepfake
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
